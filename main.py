@@ -1,20 +1,34 @@
 import json
+from typing import List, Dict, Tuple, Optional
 
 FILE_PATH = 'library.json'
 
+# Структура данных по умолчанию для нового JSON-файла.
 DEFAULT_STRUCTURE = {
     "catalog": {}
 }
 
-def save_json(data):
-    """Сохраняет данные в JSON-файл."""
+def save_json(data: Dict) -> None:
+    """
+    Сохраняет данные в JSON-файл.
 
+    Аргументы:
+    data (Dict): Словарь, который нужно сохранить в файл.
+
+    Возвращаемое значение:
+    None: Функция ничего не возвращает.
+    """
     with open(FILE_PATH, 'w', encoding='utf-8') as file:
         json.dump(data, file, indent=4, ensure_ascii=False)
 
-def load_json_or_create():
-    """Загружает JSON, если файл существует, или создаёт новый файл."""
+def load_json_or_create() -> Dict:
+    """
+    Загружает JSON-файл, если он существует, или создает новый файл
+    с структурой по умолчанию.
 
+    Возвращаемое значение:
+    Dict: Загруженные или созданные данные в виде словаря.
+    """
     try:
         with open(FILE_PATH, 'r', encoding='utf-8') as file:
             return json.load(file)
@@ -27,25 +41,41 @@ def load_json_or_create():
         save_json(DEFAULT_STRUCTURE)
         return DEFAULT_STRUCTURE
 
-def add_book(book_title, author_name, publication_year):
-    '''Добавление книги в каталог'''
+def add_book(book_title: str, author_name: str, publication_year: int) -> None:
+    """
+    Добавляет новую книгу в каталог.
 
+    Аргументы:
+    book_title (str): Название книги.
+    author_name (str): Имя автора.
+    publication_year (int): Год издания книги.
+
+    Возвращаемое значение:
+    None: Функция ничего не возвращает.
+    """
     data = load_json_or_create()
     book_dict = {"title": book_title, 'author': author_name, 'year': publication_year, 'status': 'в наличии'}
 
-    #создание ID
+    # создание ID
     if not data["catalog"]:
         new_id = 1
     else:
         new_id = max(int(key) for key in data["catalog"].keys()) + 1
 
-    #добавление записив каталог
+    # добавление записи в каталог
     data["catalog"][str(new_id)] = book_dict
     save_json(data)
 
-def remove_book(id_to_delete):
-    '''Удаление книги из каталога по ID'''
+def remove_book(id_to_delete: str) -> bool:
+    """
+    Удаляет книгу из каталога по её ID.
 
+    Аргументы:
+    id_to_delete (str): ID книги, которую нужно удалить.
+
+    Возвращаемое значение:
+    bool: Возвращает True, если книга была удалена, и False, если книга с таким ID не найдена.
+    """
     data = load_json_or_create()
 
     if id_to_delete in data['catalog']:
@@ -55,9 +85,17 @@ def remove_book(id_to_delete):
     else:
         return False
 
-def search_book(search_key):
-    '''Поиск книги по параметру'''
+def search_book(search_key: str) -> List[Tuple[str, Dict]]:
+    """
+    Ищет книги по параметрам (название, автор или год издания).
 
+    Аргументы:
+    search_key (str): Ключ для поиска (может быть названием, автором или годом).
+
+    Возвращаемое значение:
+    List[Tuple[str, Dict]]: Список найденных книг, где каждый элемент
+    является кортежем с ID книги и словарем с данными книги.
+    """
     data = load_json_or_create()
 
     found_books = []
@@ -73,29 +111,34 @@ def search_book(search_key):
 
     return found_books
 
+def change_status(book_id: str, new_status: str) -> bool:
+    """
+    Меняет статус книги по её ID (например, "в наличии" или "выдана").
 
-def change_status(book_id, new_status):
-    '''Нахождение книги по ID и смена статуса'''
+    Аргументы:
+    book_id (str): ID книги, для которой нужно изменить статус.
+    new_status (str): Новый статус книги (например, "в наличии" или "выдана").
 
+    Возвращаемое значение:
+    bool: Возвращает True, если статус был успешно изменён, и False, если книга с таким ID не найдена.
+    """
     data = load_json_or_create()
     for id, book_data in data['catalog'].items():
         if id == book_id:
             book_data['status'] = new_status
             break
-        else:
-            return False
+    else:
+        return False
 
     save_json(data)
     return True
 
-
-
-
+# Главный цикл программы
 while True:
-    #полчение данных
+    # Получение данных из файла
     data = load_json_or_create()
 
-    #навигация
+    # Меню выбора действий
     print("\n1. Добавить книгу")
     print("2. Удалить книгу")
     print("3. Поиск книги")
@@ -113,7 +156,7 @@ while True:
 
         add_book(title, author, year)
 
-    #удаление книги по ID
+    # удаление книги по ID
     elif choice == '2':
         id_removal = input('Введите id книги, которую нужно удалить ')
         result_remove = remove_book(id_removal)
@@ -123,7 +166,7 @@ while True:
         else:
             print('Записи с таким ID нет')
 
-    #поиск книги по параметрам
+    # поиск книги по параметрам
     elif choice == '3':
         search = input('Введите автора или название книги или год для поиска ')
 
@@ -135,16 +178,16 @@ while True:
         else:
             print('Таких книг нет')
 
-    #вывод всех книг из каталога
+    # вывод всех книг из каталога
     elif choice == '4':
         if data:
             print("Все книги в каталоге:")
             for id, item in data['catalog'].items():
-                print(f'\nID: {id}\nНазвание: {item['title']}\nАвтор: {item['author']}\nГод: {item['year']}\nСтатус: {item['status']}\n')
+                print(f'\nID: {id}\nНазвание: {item["title"]}\nАвтор: {item["author"]}\nГод: {item["year"]}\nСтатус: {item["status"]}\n')
         else:
             print("Файл пуст или недоступен.")
 
-    #нахождение книги по ID и смена статуса
+    # нахождение книги по ID и смена статуса
     elif choice == '5':
         book_id = input('Введите ID книги ')
         new_status = input('Введите новый статус (он может быть либо "В наличии" либо "Выдана") ')
@@ -152,14 +195,13 @@ while True:
         result_change = change_status(book_id, new_status)
 
         if result_change:
-            print('Статус изменен успешо')
+            print('Статус изменен успешно')
         else:
             print('Такого ID нет')
 
-    #выход из программы
+    # выход из программы
     elif choice == '6':
         print("Выход.")
         break
     else:
         print("Неверный выбор. Попробуйте ещё раз.")
-
